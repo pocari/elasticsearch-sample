@@ -1,0 +1,103 @@
+POST /score_test/_doc/1
+{
+  "id": "001",
+  "field1": "hoge foo",
+  "field2": "hoge bar",
+  "field3": "hoge piyo"
+}
+
+POST /score_test/_doc/2
+{
+  "id": "002",
+  "field1": "hoge piyo",
+  "field2": "foo piyo",
+  "field3": "bar piyo"
+}
+
+POST /score_test/_doc/3
+{
+  "id": "003",
+  "field1": "foo foo",
+  "field2": "hoge foo",
+  "field3": "baz foo"
+}
+
+POST /score_test/_doc/4
+{
+  "id": "004",
+  "field1": "baz bar",
+  "field2": "foo bar",
+  "field3": "hoge bar"
+}
+
+POST /score_test/_doc/5
+{
+  "id": "005",
+  "field1": "baz baz",
+  "field2": "hoge baz",
+  "field3": "hoge ba"
+}
+
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html
+
+// bar bazが、field1、field2、またはfield3のいずれかにマッチするレコードを取得
+// デフォルトでは、よりマッチするフィールドのscoreが高くなる(=先頭にくる)ので
+// bar bazともにfield1に含まれるid:004のレコードが一番上に来る
+//
+// best_fieldsは一番マッチ度が高いものを優先するqueryのtype。上記のように、クエリの単語が両方含まれている004のスコアが最も高くなる
+// tie_breakerを指定しておくと、その他にマッチしたフィールドも考慮して(0.3なので3割分考慮する)スコアをつけてくれる。
+// tie_breadkerを指定しない場合は、0として扱われて、文字通りbestなfieldのスコアのみで判断される
+GET /score_test/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "bar baz",
+      "type": "best_fields",
+      "tie_breaker": 0.3,
+      "fields": [
+        "field1",
+        "field2",
+        "field3"
+      ]
+    }
+  }
+}
+
+
+// 上の例とクエリは同じだが、filed3でのマッチを他のフィールドでのマッチよりも5倍(^5の部分)重みをつけるので、
+// マッチ度でいうと、id:004のfield1が一番マッチしているが、重みのおかげで、field3にbazが含まれるid:003のスコアが最も高くなる
+// 検索クエリ自体はbar bazなので、そのいずれかにマッチするレコードは他にもあるが、id:003が最もスコアが高くなる理由は、
+// bar, bazを比べると、bazの方がこのindexのdocument全体のなかでのレア度が高いとみなされているからの模様(人が目で見ると微妙だが)
+GET /score_test/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "bar baz",
+      "type": "best_fields", 
+      "tie_breaker": 0.3,
+      "fields": [
+        "field1",
+        "field2",
+        "field3^5"
+      ]
+    }
+  }
+}
+
+// なお、このようなスコアの値でよくわからない値が出ている場合、該当の /ドキュメント/_explain として検索クエリを指定すると、そのドキュメントのスコア計算の詳細がえられる。
+// 例)上のクエリのid:003のスコアリング要素がよくわからない場合、下記のようなクエリでどう集計されたかのjsonが返ってくる
+GET /score_test/_doc/3/_explain
+{
+  "query": {
+    "multi_match": {
+      "query": "bar baz",
+      "type": "best_fields", 
+      "tie_breaker": 0.3,
+      "fields": [
+        "field1",
+        "field2",
+        "field3^5"
+      ]
+    }
+  }
+}

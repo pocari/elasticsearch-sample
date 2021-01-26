@@ -1,0 +1,41 @@
+put /score_test
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "greek_lowercase_filter": {
+          "type": "lowercase",
+          "language": "greek"
+        }
+      },
+      "tokenizer":{
+        "kuromoji": {
+          "type": "kuromoji_tokenizer" }
+      },
+      "analyzer": {
+        "kuromoji_analyzer":{
+          "type": "custom",
+          "tokenizer": "kuromoji",
+          "filter": ["greek_lowercase_filter", "cjk_width"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "field1": {
+        "type": "text"
+      },
+      "field2": {
+        "type": "text"
+      },
+      "field3": {
+        "type": "text"
+      }
+    }
+  }
+}
+
