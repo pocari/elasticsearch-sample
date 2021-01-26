@@ -1,0 +1,246 @@
+T1 - S1 - E1
+        - E2
+        - E3
+T2 - S2 - E4
+        - E5
+というデータを作成している
+// titleのinsert
+POST /contents/_doc/T.1
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "title"
+  },
+  "title" : {
+    "id": 1,
+    "name_ja": "タイトル001",
+    "title_code": "T-ABC-001"
+  }
+}
+
+POST /contents/_doc/T.2
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "title"
+  },
+  "title" : {
+    "id": 2,
+    "name_ja": "タイトル002",
+    "title_code": "T-ABC-002"
+  }
+}
+
+// シーズンのinsert
+POST /contents/_doc/S.1?routing=T.1
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "season",
+    "parent": "T.1"
+  },
+  "season" : {
+    "id": 1,
+    "name_ja": "シーズン001",
+    "seasons_code": "S-ABC-001"
+  }
+}
+
+POST /contents/_doc/S.2?routing=T.2
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "season",
+    "parent": "T.2"
+  },
+  "season" : {
+    "id": 1,
+    "name_ja": "シーズン002",
+    "seasons_code": "S-ABC-002"
+  }
+}
+
+// エピソードのinsert
+POST /contents/_doc/E.1?routing=S.1
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "episode",
+    "parent": "S.1"
+  },
+  "seasons" : {
+    "id": 1,
+    "name_ja": "エピソード001",
+    "seasons_code": "E-ABC-001"
+  }
+}
+
+POST /contents/_doc/E.2?routing=S.1
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "episode",
+    "parent": "S.1"
+  },
+  "episode": {
+    "id": 1,
+    "name_ja": "エピソード002",
+    "seasons_code": "E-ABC-002"
+  }
+}
+
+POST /contents/_doc/E.3?routing=S.1
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "episode",
+    "parent": "S.1"
+  },
+  "episode": {
+    "id": 1,
+    "name_ja": "エピソード003",
+    "seasons_code": "E-ABC-003"
+  }
+}
+
+
+POST /contents/_doc/E.4?routing=S.2
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "episode",
+    "parent": "S.2"
+  },
+  "episode": {
+    "id": 1,
+    "name_ja": "エピソード004",
+    "seasons_code": "E-ABC-004"
+  }
+}
+
+POST /contents/_doc/E.5?routing=S.2
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "join_field": {
+    "name": "episode",
+    "parent": "S.2"
+  },
+  "episode": {
+    "id": 1,
+    "name_ja": "エピソード005",
+    "seasons_code": "E-ABC-005"
+  }
+}
+
+// 検索サンプル
+// seasonのみ抽出
+// 「seasonを子供に持つ(has_child)」という条件で抽出
+GET /contents/_search
+{
+  "query": {
+    "has_child": {
+      "type": "episode",
+      "query": {
+        "match_all": {}
+      }
+    }
+  }
+}
+
+// 子供のepisodeのname_jaに003が含まれるようなseasonを抽出
+GET /contents/_search
+{
+  "query": {
+    "has_child": {
+      "type": "episode",
+      "query": {
+        "terms": {
+          "episode.name_ja": ["003"]
+        }
+      }
+    }
+  }
+}
+
+// 逆に「titleという親を持つ(has_parent)」という条件でも抽出できる
+GET /contents/_search
+{
+  "query": {
+    "has_parent": {
+      "parent_type": "title",
+      "query": {
+        "match_all": {}
+      }
+    }
+  }
+}
+
+
+// name_jaに003が含まれるようなepisodeを子供として持つシーズンを抽出
+GET /contents/_search
+{
+  "query": {
+    "has_child": {
+      "type": "episode",
+      "query": {
+        "terms": {
+          "episode.name_ja": ["003"]
+        }
+      }
+    }
+  }
+}
+
+# 親のIDがT.1であるようなseason
+GET /contents/_search
+{
+  "query": {
+    "parent_id": {
+      "type": "season",
+      "id": "T.1"
+    }
+  }
+}
+
+# 親のIDがS.1であるようなepisode
+GET /contents/_search
+{
+  "query": {
+    "parent_id": {
+      "type": "episode",
+      "id": "S.1"
+    }
+  }
+}
+
+# タイトルIDがT.1の孫(episode)を抽出
+# => 親がT.1であるようなseasonを親として持つdocumentを抽出する
+#    親のT.1も一緒に取る
+GET /contents/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "has_parent": {
+            "parent_type": "season",
+            "query": {
+              "parent_id": {
+                "type": "season",
+                "id": "T.1"
+              }
+            }
+          }
+        },
+        {
+          "terms": {
+            "title.id": [
+              1
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+

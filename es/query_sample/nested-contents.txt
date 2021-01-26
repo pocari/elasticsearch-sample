@@ -1,0 +1,84 @@
+POST /nested-contents/_doc/T.1
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "id": "T.1",
+  "name_ja": "タイトル001",
+  "title_code": "T-ABC-001",
+  "seasons": [
+    {
+      "updated_at": "2021-01-22T09:00:00Z",
+      "id": "S.1",
+      "name_ja": "シーズン001",
+      "season_code": "S-ABC-001",
+      "episodes": [
+        {
+          "updated_at": "2021-01-22T09:00:00Z",
+          "id": "E.1",
+          "name_ja": "エピソード001",
+          "episode_code": "E-ABC-001"
+        },
+        {
+          "updated_at": "2021-01-22T09:00:00Z",
+          "id": "E.2",
+          "name_ja": "エピソード002",
+          "episode_code": "E-ABC-002"
+        },
+        {
+          "updated_at": "2021-01-22T09:00:00Z",
+          "id": "E.3",
+          "name_ja": "エピソード003",
+          "episode_code": "E-ABC-003"
+        }
+      ]
+    }
+  ]
+}
+
+POST /nested-contents/_doc/T.2
+{
+  "updated_at": "2021-01-22T09:00:00Z",
+  "id": "T.2",
+  "name_ja": "タイトル002",
+  "title_code": "T-ABC-002",
+  "seasons": [
+    {
+      "updated_at": "2021-01-22T09:00:00Z",
+      "id": "S.2",
+      "name_ja": "シーズン002",
+      "season_code": "S-ABC-002",
+      "episodes": [
+        {
+          "updated_at": "2021-01-22T09:00:00Z",
+          "id": "E.4",
+          "name_ja": "エピソード004",
+          "episode_code": "E-ABC-004"
+        },
+        {
+          "updated_at": "2021-01-22T09:00:00Z",
+          "id": "E.5",
+          "name_ja": "エピソード005",
+          "episode_code": "E-ABC-005"
+        }
+      ]
+    }
+  ]
+}
+
+# シーズン名に 001 が含まれるレコード
+GET /nested-contents/_search
+{
+  "query": {
+    "nested": {
+      "path": "seasons",
+      "query": {
+        "terms": {
+          "seasons.name_ja": [
+            "001"
+          ]
+        }
+      }
+    }
+  }
+}
+
+# エピソード名に001, 003, 004が含まれるレコード

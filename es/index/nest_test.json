@@ -1,0 +1,74 @@
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "greek_lowercase_filter": {
+          "type": "lowercase",
+          "language": "greek"
+        }
+      },
+      "tokenizer":{
+        "kuromoji": {
+          "type": "kuromoji_tokenizer" }
+      },
+      "analyzer": {
+        "kuromoji_analyzer":{
+          "type": "custom",
+          "tokenizer": "kuromoji",
+          "filter": ["greek_lowercase_filter", "cjk_width"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name_ja": {
+        "type": "text"
+      },
+      "title_code": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "seasons": {
+        "type": "nested",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "name_ja": {
+            "type": "text"
+          },
+          "season_code": {
+            "type": "keyword"
+          },
+          "updated_at": {
+            "type": "date"
+          },
+          "episodes": {
+            "type": "nested",
+            "properties": {
+              "id": {
+                "type": "keyword"
+              },
+              "name_ja": {
+                "type": "text"
+              },
+              "episode_code": {
+                "type": "keyword"
+              },
+              "updated_at": {
+                "type": "date"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
